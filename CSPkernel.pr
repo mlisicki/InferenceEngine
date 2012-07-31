@@ -1,0 +1,85 @@
+/****************************/
+/*   CSP labelling kernel   */
+/*      (c) R. Bart½k       */
+/*           1996           */
+/****************************/
+
+% this module implements a kernel for labelling that you can add to your
+% program to get various CSP systems
+% to get a complete labelling you need to define procedures
+%     sort_vars,domain_mem,callable,finished
+%  and also procedures for individual constraints
+% see examples in IntBT.pr and IntFC.pr
+
+:-op(700,xfx,::).
+
+% label Vars according to constraints Cons, return constraints RestCons
+% whose satisfiability can't be proved
+labelling(Vars,Cons,RestCons):-
+  sort_vars(Vars,NVars),
+	 normalize_cons(Cons,NormCons),!,
+	 solve(NVars,NormCons,RestCons).
+
+solve([V::D|Vs],Cons,RCons):-
+	 domain_mem(V,D),
+  test_cons(Cons,Vs,NewCons,NewVs),
+		solve(NewVs,NewCons,RCons).
+solve([],Cons,RCons):-
+  denormalize_cons(Cons,RCons),!.
+
+% test satisfiability of list of constraints
+test_cons([C|RCons],Vs,NewCons,NewVs):-
+	 test_c(C,Vs,AuxVs,Answ),
+  (Answ=true -> NewCons=AuxCons
+              ; NewCons=[Answ|AuxCons]),
+	 test_cons(RCons,AuxVs,AuxCons,NewVs).
+test_cons([],Vs,[],Vs).
+
+% test constraint satisfiability
+test_c(V-C,Vs,NewVs,Answ):-
+	 C=..[P|Args],
+  select_vars(V,NV),
+  (callable(NV,C) -> (CC=..[P,NV,Vs,NewVs|Args],call(CC))
+                   ; NewVs=Vs),
+  (finished(NV,C) -> Answ=true ; Answ=NV-C).
+
+
+%%%%%% auxiliary procedures %%%%%%%%%%
+
+% transmit list of constraints to list of pairs Vars-Constraint, where
+% Vars is a list of variables in Constraint
+normalize_cons([C|Cs],[V-C|NewCs]):-
+	 find_vars(C,[],V),
+	 normalize_cons(Cs,NewCs),!.
+normalize_cons([],[]).
+
+denormalize_cons([V-C|T],[C|NT]):-
+  denormalize_cons(T,NT).
+denormalize_cons([],[]).
+
+% select vars from list
+select_vars([H|T],[H|NT]):-
+ 	var(H),select_vars(T,NT),!.
+select_vars([_|T],NT):-
+	 select_vars(T,NT).
+select_vars([],[]).
+
+% find vars in expression
+find_vars(C,Vs,NewVs):-
+ 	nonvar(C),
+ 	C=..[_|Args],
+ 	find_vars_list(Args,Vs,NewVs),!.
+find_vars(X,Vs,NewVs):-
+ 	var(X),
+ 	(mem(X,Vs) -> NewVs=Vs ; NewVs=[X|Vs]).
+
+% find vars in list of expressions
+find_vars_list([H|T],Vs,NewVs):-
+ 	find_vars(H,Vs,AuxVs),
+ 	find_vars_list(T,AuxVs,NewVs),!.
+find_vars_list([],Vs,Vs).
+
+mem(X,[Y|T]):-
+	 X==Y,!.
+mem(X,[_|T]):-
+  mem(X,T).
