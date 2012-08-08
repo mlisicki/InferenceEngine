@@ -1,6 +1,36 @@
 %% OCTREE
 %  by Michal Lisicki (2012)
 
+octree(vertex,OT) :-
+    bb_min(V1),bb_max(V2),
+    findall(object(vertex,G,[X,Y,Z]),object(vertex,G,[X,Y,Z]),Vs),
+    add_list(ot(V1,V2,[],[]),Vs,OT,1).
+   
+octree(segment,OT) :-
+    octree(vertex,NewTree),
+    findall(object(segment,G,[X,Y,Z]),object(segment,G,[X,Y,Z]),Vs),
+    add_list(NewTree,Vs,OT,_).
+
+octree(segment_pair,OT) :-
+    octree(segment,NewTree),
+    findall(object(segment_pair,G,[X,Y,Z]),object(segment_pair,G,[X,Y,Z]),Vs),
+    add_list(NewTree,Vs,OT,_).
+
+octree(face,OT) :-
+    octree(segment_pair,NewTree),
+    findall(object(face,G,[X,Y,Z]),object(face,G,[X,Y,Z]),Vs),
+    add_list(NewTree,Vs,OT,_).
+
+octree(face_pair,OT) :-
+    octree(face,NewTree),
+    findall(object(face_pair,G,[X,Y,Z]),object(face_pair,G,[X,Y,Z]),Vs),
+    add_list(NewTree,Vs,OT,_).
+
+octree(cuboid,OT) :-
+    octree(face_pair,NewTree),
+    findall(object(cuboid,G,[X,Y,Z]),object(cuboid,G,[X,Y,Z]),Vs),
+    add_list(NewTree,Vs,OT,_).
+
 % find bounding box
 bb_max(object(vertex,graph([],[]),[X,Y,Z])) :-
     object(vertex,_,[X,_,_]),not((object(vertex,_,[X1,_,_]),X1>X)),
@@ -30,7 +60,7 @@ add(Tree,Object,NewTree,LeafCapacity) :-
     add(Tree,Object,[Object],NewTree,LeafCapacity);
     add(Tree,Object,Vs,NewTree,LeafCapacity)).
 
-add(Tree,Object,[],Tree,LeafCapacity).
+add(Tree,_,[],Tree,_).
 
 add(Tree,Object,[V|R],NewTree,LeafCapacity) :-
     add(Tree,Object,V,NewTree1,LeafCapacity),
@@ -43,9 +73,14 @@ add(Tree,Object,[V|R],NewTree,LeafCapacity) :-
 
 % Add Object to the leaf determined by V
 add(ot(BB_min,BB_max,Nodes,Elements),Object,V,NewTree,LeafCapacity) :-
+    V =.. [object,vertex,_,_],!,
     ot_geq(V,BB_min),
     ot_geq(BB_max,V),
     add_node(ot(BB_min,BB_max,Nodes,Elements),Object,V,NewTree,LeafCapacity).
+
+add(Tree,Object,V,NewTree,LeafCapacity) :-
+    V =.. [object,_,graph(Vs,_),_],
+    add(Tree,Object,Vs,NewTree,LeafCapacity).
 
 % Following is the case of addition of the lowest level element
 add_node(ot(BB_min,BB_max,[],Elements),Object,Object,
@@ -130,8 +165,8 @@ list_call([X|R]) :-
     list_call(R).
 
 ot_geq(Object1,Object2) :-
-    Object1 =.. [object,_,_,[XA,YA,ZA]],
-    Object2 =.. [object,_,_,[XB,YB,ZB]],
+    Object1 =.. [object,vertex,_,[XA,YA,ZA]],
+    Object2 =.. [object,vertex,_,[XB,YB,ZB]],
     XA >= XB, YA >= YB, ZA >= ZB.
 
 ot_gt(Object1,Object2) :-
@@ -139,11 +174,50 @@ ot_gt(Object1,Object2) :-
     Object2 =.. [object,_,_,[XB,YB,ZB]],
     XA > XB, YA > YB, ZA > ZB.
 
+%find(Tree,Object,Nodes) :-
+%    Object =.. [object,_,graph(Vs,_),_],
+%    (Vs == [],!,
+%    find2(Tree,Object,Nodes);
+%    find_list(Tree,Vs,Nodes)).
+%
+%find_list(_,[],[]).
+%
+%find_list(Tree,[Object|R],Nodes) :-
+%    find(Tree,Object,Node),
+%    find_list(Tree,R,RNodes),
+%    conc(Node,RNodes,Nodes).
+%
+%find2(ot(BB_min,BB_max,Nodes,Elements),Object,FNodes) :-
+%    ot_geq(Object,BB_min),
+%    ot_geq(BB_max,Object),
+%    find_node(ot(BB_min,BB_max,Nodes,Elements),Object,FNodes).
+%
+%find_node(ot(BB_min,BB_max,[],Elements),Object,[ot(BB_min,BB_max,[],Elements)]) :-
+%    Object =.. [object,Name,_,_],
+%    Bucket =.. [Name,L],
+%    del(Bucket,Elements,_),
+%    member(Object,L).
+%
+%find_node(ot(_,_,Nodes,[]),Object,FNodes) :-
+%    find_nodes(Object,Nodes,FNodes).
+%
+%find_nodes(_,[],[]).
+%
+%find_nodes(Object,[Node|RNodes],FNodes) :-
+%    find2(Node,Object,FNode),!,
+%    find_nodes(Object,RNodes,FRNodes),
+%    conc(FNode,FRNodes,FNodes).
+%
+%find_nodes(Object,[_|RNodes],FRNodes) :-
+%    find_nodes(Object,RNodes,FRNodes).
+
 find(Tree,Object,Nodes) :-
-    Object =.. [object,_,graph(Vs,_),_],
-    (Vs == [],!,
-    find_node(Tree,Object,Nodes);
-    find_list(Tree,Vs,Nodes)).
+    Object =.. [object,vertex,_,_],!,
+    find2(Tree,Object,Nodes).
+
+find(Tree,Object,Nodes) :-
+    show_vertices2(Object,L),
+    find_list(Tree,L,Nodes).
 
 find_list(_,[],[]).
 
@@ -152,24 +226,32 @@ find_list(Tree,[Object|R],Nodes) :-
     find_list(Tree,R,RNodes),
     conc(Node,RNodes,Nodes).
 
-find_node(ot(BB_min,BB_max,[],Elements),Object,ot(BB_min,BB_max,[],Elements)) :-
+find2(ot(BB_min,BB_max,Nodes,Elements),Object,FNodes) :-
+    ot_geq(Object,BB_min),
+    ot_geq(BB_max,Object),
+    find_node(ot(BB_min,BB_max,Nodes,Elements),Object,FNodes).
+
+find_node(ot(BB_min,BB_max,[],Elements),Object,[ot(BB_min,BB_max,[],Elements)]) :-
     Object =.. [object,Name,_,_],
     Bucket =.. [Name,L],
     del(Bucket,Elements,_),
     member(Object,L).
 
-find_node(ot(BB_min,BB_max,Nodes,[]),Object,FNodes) :-
+find_node(ot(_,_,Nodes,[]),Object,FNodes) :-
     find_nodes(Object,Nodes,FNodes).
 
 find_nodes(_,[],[]).
 
 find_nodes(Object,[Node|RNodes],FNodes) :-
-    find_node(Node,Object,FNode),!,
+    find2(Node,Object,FNode),!,
     find_nodes(Object,RNodes,FRNodes),
-    conc(FNode,FRNodes,FNodes)..
+    conc(FNode,FRNodes,FNodes).
 
-find_nodes(Object,[Node|RNodes],FRNodes) :-
+find_nodes(Object,[_|RNodes],FRNodes) :-
     find_nodes(Object,RNodes,FRNodes).
+
+
+
 
 % Display the tree
 show(Tree) :-

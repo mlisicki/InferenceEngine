@@ -19,13 +19,51 @@ axis_parallel(Object1,Object2) :-
      abs(ZA-ZB)<Eps).     
 
 connected(Object1,Object2) :-
+    Object1 =.. [object,face,graph([S1A,S2A],_),_],
+    Object2 =.. [object,face,graph([S1B,S2B],_),_],!,
+    S1A =.. [object,segment_pair,graph(S1AS,_),_],
+    S2A =.. [object,segment_pair,graph(S2AS,_),_],
+    S1B =.. [object,segment_pair,graph(S1BS,_),_],
+    S2B =.. [object,segment_pair,graph(S2BS,_),_],
+    conc(S1AS,S2AS,SA), % get all face segments
+    conc(S1BS,S2BS,SB),
+    any_equal(SA,SB),!.
+
+connected(Object1,Object2) :-
+    (Type = segment_pair; Type = face_pair),
+    Object1 =.. [object,Type,graph([S1A,S2A],_),_],
+    Object2 =.. [object,Type,graph([S1B,S2B],_),_],!,
+    permutation([S1A,S2A],[PS1A,PS2A]),
+    permutation([S1B,S2B],[PS1B,PS2B]),
+    connected(PS1A,PS1B),
+    connected(PS2A,PS2B),!.
+
+connected(Object1,Object2) :-
     Object1 =.. [object,_,graph(V1,_),_],
     Object2 =.. [object,_,graph(V2,_),_],
     any_equal(V1,V2).
 
+opposite_parallel(Object1,Object2) :-
+    (Type = segment_pair; Type = face_pair),
+    Object1 =.. [object,Type,graph([S1A,S2A],_),[XSPA,YSPA,ZSPA]],
+    Object2 =.. [object,Type,graph([S1B,S2B],_),[XSPB,YSPB,ZSPB]],
+    permutation([S1A,S2A],[PS1A,PS2A]),
+    permutation([S1B,S2B],[PS1B,PS2B]),
+    parallel(PS1A,PS1B),
+    parallel(PS2A,PS2B),!,
+    arg(3,PS1A,[XS1A,YS1A,ZS1A]),
+    arg(3,PS1B,[XS1B,YS1B,ZS1B]),
+    arg(3,PS2A,[XS2A,YS2A,ZS2A]),
+    arg(3,PS2B,[XS2B,YS2B,ZS2B]),
+    Eps is 0.001,
+    A1 is (XS1A+XS1B)/2, B1 is (YS1A+YS1B)/2, C1 is (ZS1A+ZS1B)/2,
+    sqrt((A1-XSPA)^2+(B1-YSPA)^2+(C1-ZSPA)^2) =< Eps,
+    A2 is (XS2A+XS2B)/2, B2 is (YS2A+YS2B)/2, C2 is (ZS2A+ZS2B)/2,
+    sqrt((A2-XSPA)^2+(B2-YSPA)^2+(C2-ZSPA)^2) =< Eps,!.
+
 parallel(Object1, Object2) :-
     Object1 =.. [object,segment,graph([V1A,V2A],_),_],
-    Object2 =.. [object,segment,graph([V1B,V2B],_),_],
+    Object2 =.. [object,segment,graph([V1B,V2B],_),_],!,
     V1A =.. [object,vertex,_,[XA,YA,ZA]],
     V2A =.. [object,vertex,_,[XB,YB,ZB]],
     V1B =.. [object,vertex,_,[XC,YC,ZC]],
@@ -41,11 +79,17 @@ parallel(Object1, Object2) :-
 %    abs((XA-XB)*(ZC-ZD)-(XC-XD)*(ZA-ZB)) =< Eps*abs((XC-XD)*(ZC-ZD)).        % based on the equality of x-y, y-z, z-x planes
 
 parallel(Object1,Object2) :-
-    Object1 =.. [object,face,graph(V1,_),_],
-    Object2 =.. [object,face,graph(V2,_),_],
-    permutation(V1,P1),
-    permutation(V2,P2),
-    list_parallel(P1,P2).
+    Object1 =.. [object,face,graph([S1A,S2A],_),_],
+    Object2 =.. [object,face,graph([S1B,S2B],_),_],
+    S1A =.. [object,segment_pair,graph(S1AS,_),_],
+    S2A =.. [object,segment_pair,graph(S2AS,_),_],
+    S1B =.. [object,segment_pair,graph(S1BS,_),_],
+    S2B =.. [object,segment_pair,graph(S2BS,_),_],
+    conc(S1AS,S2AS,SA), % get all face segments
+    conc(S1BS,S2BS,SB),
+    permutation(SA,PA),
+    permutation(SB,PB),
+    list_parallel(PA,PB),!.
 
 similar_size(Object1, Object2) :-
     Object1 =.. [object,segment,graph([V1A,V2A],_),_],
@@ -96,6 +140,12 @@ equal(Object1,Object2) :-
     permutation(V2,P2),
     list_equal(P1,P2).
 
+equal_pos(Object1,Object2) :-
+    Object1 =.. [object,Name,graph(_,_),[XA,YA,ZA]],
+    Object2 =.. [object,Name,graph(_,_),[XB,YB,ZB]],
+    Eps is 0.001,
+    sqrt((XA-XB)^2+(YA-YB)^2+(ZA-ZB)^2) =< Eps.
+ 
 % ADDITIONAL PROCEDURES
 
 graph(V,E,Graph) :-
@@ -149,8 +199,8 @@ member_list([X|R],L) :-
 
 arc_list([],[]).
 
-arc_list([CVArc|R],[Arc|R1]) :-
-    CVArc=..[cv_arc,Object1,Object2,RelationName,Arc],
+arc_list([CVArc|R],[Arc|R0]) :-
+    CVArc=..[cv_arc,_,_,_,Arc],
     call(CVArc),
 %    Arc = arc(Object1,Object2,RelationName),
     arc_list(R,R0).
@@ -181,7 +231,22 @@ list_parallel([],[]).
 
 list_parallel([Object1|R1],[Object2|R2]) :-
     parallel(Object1,Object2),
-    list_equal(R1,R2).
+    list_parallel(R1,R2).
+
+list_oparallel([],[]).
+
+list_oparallel([Object1|R1],[Object2|R2]) :-
+    opposite_parallel(Object1,Object2),
+    list_oparallel(R1,R2).
+
+gt(Object1,Object2) :-
+    (Type = face_pair; Type = segment_pair),
+    Object1 =.. [object,Type,graph([_,SA],_),_],
+    Object2 =.. [object,Type,graph([SB,_],_),_],!,
+    gt(SB,SA).
+%    corner(Object1,C1),
+%    corner(Object2,C2),
+%    gt(C1,C2).
 
 gt(Object1,Object2) :-
     Object1 =.. [object,_,_,[XA,YA,ZA]],
@@ -199,11 +264,23 @@ gt(Arc1,Arc2) :-
     (gt(ObjectB2,ObjectA2);
      ObjectB2=ObjectA2,
      not(gt(ObjectB1,ObjectA1))).
-    
 
-    assert(m(M)),
-    write(Rule),nl,
-    write(M),nl.
+corner(Object,PV1A) :-
+    Object =.. [object,segment_pair,graph([SO1,SO2],_),_],
+    SO1 =.. [object,segment,graph([V1A,V2A],_),_],
+    SO2 =.. [object,segment,graph([V1B,V2B],_),_],
+    permutation([V1A,V2A],[PV1A,PV2A]),
+    permutation([V1B,V2B],[PV1B,PV2B]),
+    equal(PV1A,PV1B).
+
+extract_objects(_,[],[]).
+
+extract_objects(Type,[Node|RNodes],Objects) :-
+    Node =.. [ot,_,_,_,Elements],
+    Bucket =.. [Type,OL],
+    del(Bucket,Elements,_),
+    extract_objects(Type,RNodes,RObjects),
+    nr_add_list(OL,RObjects,Objects).
 
 %% setof([V1,V2,V3,V4],V1^V2^V3^V4^connected(seg(V1,V2), seg(V3,V4)),Bag), writelist(Bag).
 %
