@@ -1,34 +1,44 @@
 %% OCTREE
 %  by Michal Lisicki (2012)
 
-octree(vertex,OT) :-
+octree(vertex,OT,Vs) :-
     bb_min(V1),bb_max(V2),
     findall(object(vertex,G,[X,Y,Z]),object(vertex,G,[X,Y,Z]),Vs),
     add_list(ot(V1,V2,[],[]),Vs,OT,1).
    
-octree(segment,OT) :-
-    octree(vertex,NewTree),
+octree(segment,OT,Vs) :-
+    octree(vertex,NewTree,_),
     findall(object(segment,G,[X,Y,Z]),object(segment,G,[X,Y,Z]),Vs),
     add_list(NewTree,Vs,OT,_).
 
-octree(segment_pair,OT) :-
-    octree(segment,NewTree),
-    findall(object(segment_pair,G,[X,Y,Z]),object(segment_pair,G,[X,Y,Z]),Vs),
+octree(segment_pair,OT,Vs) :-
+    octree(segment,NewTree,NE),
+    findall(object(segment_pair,G,[X,Y,Z]),object(segment_pair,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
 
-octree(face,OT) :-
-    octree(segment_pair,NewTree),
-    findall(object(face,G,[X,Y,Z]),object(face,G,[X,Y,Z]),Vs),
+octree(face,OT,Vs) :-
+    octree(segment_pair,NewTree,NE),
+    findall(object(face,G,[X,Y,Z]),object(face,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
 
-octree(face_pair,OT) :-
-    octree(face,NewTree),
-    findall(object(face_pair,G,[X,Y,Z]),object(face_pair,G,[X,Y,Z]),Vs),
+octree(face_pair,OT,Vs) :-
+    octree(face,NewTree,NE),
+    findall(object(face_pair,G,[X,Y,Z]),object(face_pair,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
 
-octree(cuboid,OT) :-
-    octree(face_pair,NewTree),
-    findall(object(cuboid,G,[X,Y,Z]),object(cuboid,G,[X,Y,Z]),Vs),
+octree(square_face_pair,OT,Vs) :-
+    octree(face,NewTree,NE),
+    findall(object(square_face_pair,G,[X,Y,Z]),object(square_face_pair,G,[X,Y,Z],NewTree,NE),Vs),
+    add_list(NewTree,Vs,OT,_).
+
+octree(cuboid,OT,Vs) :-
+    octree(face_pair,NewTree,NE),
+    findall(object(cuboid,G,[X,Y,Z]),object(cuboid,G,[X,Y,Z],NewTree,NE),Vs),
+    add_list(NewTree,Vs,OT,_).
+
+octree(square_cuboid,OT,Vs) :-
+    octree(square_face_pair,NewTree,NE),
+    findall(object(square_cuboid,G,[X,Y,Z]),object(square_cuboid,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
 
 % find bounding box
@@ -249,9 +259,6 @@ find_nodes(Object,[Node|RNodes],FNodes) :-
 
 find_nodes(Object,[_|RNodes],FRNodes) :-
     find_nodes(Object,RNodes,FRNodes).
-
-
-
 
 % Display the tree
 show(Tree) :-

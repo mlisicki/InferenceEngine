@@ -30,7 +30,7 @@ connected(Object1,Object2) :-
     any_equal(SA,SB),!.
 
 connected(Object1,Object2) :-
-    (Type = segment_pair; Type = face_pair),
+    (Type = segment_pair; Type = face_pair ; Type = square_face_pair),
     Object1 =.. [object,Type,graph([S1A,S2A],_),_],
     Object2 =.. [object,Type,graph([S1B,S2B],_),_],!,
     permutation([S1A,S2A],[PS1A,PS2A]),
@@ -44,7 +44,7 @@ connected(Object1,Object2) :-
     any_equal(V1,V2).
 
 opposite_parallel(Object1,Object2) :-
-    (Type = segment_pair; Type = face_pair),
+    (Type = segment_pair; Type = face_pair; Type = square_face_pair),
     Object1 =.. [object,Type,graph([S1A,S2A],_),[XSPA,YSPA,ZSPA]],
     Object2 =.. [object,Type,graph([S1B,S2B],_),[XSPB,YSPB,ZSPB]],
     permutation([S1A,S2A],[PS1A,PS2A]),
@@ -98,8 +98,61 @@ similar_size(Object1, Object2) :-
     V2A =.. [object,vertex,_,[XB,YB,ZB]],
     V1B =.. [object,vertex,_,[XC,YC,ZC]],
     V2B =.. [object,vertex,_,[XD,YD,ZD]],
-    Eps is 0.2,
+    Eps is 0.1,
     abs(sqrt((XA-XB)^2+(YA-YB)^2+(ZA-ZB)^2)-sqrt((XC-XD)^2+(YC-YD)^2+(ZC-ZD)^2)) =< Eps.
+
+%similar_size(Object1, Object2) :-
+%    Object1 =.. [object,segment_pair,graph([S1A,S2A],_),_],
+%    Object2 =.. [object,segment_pair,graph([S1B,S2B],_),_],
+%    S1A =.. [object,segment,graph(S1AV,_),_],
+%    S2A =.. [object,segment,graph(S2AV,_),_],
+%    S1B =.. [object,segment,graph(S1BV,_),_],
+%    S2B =.. [object,segment,graph(S2BV,_),_],
+%    vertex_dist(S1AV,S1AD),
+%    vertex_dist(S2AV,S2AD),
+%    vertex_dist(S1BV,S1BD),
+%    vertex_dist(S2BV,S2BD),
+%    Eps is 0.25,
+%    write(S1AD*S2AD-S1BD*S2BD),nl,
+%    abs(S1AD*S2AD-S1BD*S2BD) =< Eps.
+
+similar_size(Object1, Object2) :-
+    Object1 =.. [object,segment_pair,graph(SA,_),_],
+    Object2 =.. [object,segment_pair,graph(SB,_),_],
+    permutation(SA,[S1A,S2A]),
+    permutation(SB,[S1B,S2B]),
+    S1A =.. [object,segment,graph(S1AV,_),_],
+    S2A =.. [object,segment,graph(S2AV,_),_],
+    S1B =.. [object,segment,graph(S1BV,_),_],
+    S2B =.. [object,segment,graph(S2BV,_),_],
+    vertex_dist(S1AV,S1AD),
+    vertex_dist(S2AV,S2AD),
+    vertex_dist(S1BV,S1BD),
+    vertex_dist(S2BV,S2BD),
+    Eps is 0.03,
+    abs(S1AD-S1BD) =< Eps,
+    abs(S2AD-S2BD) =< Eps,!.
+
+similar_size(Object1, Object2) :-
+    Object1 =.. [object,face,graph([S1A,_],_),_],
+    Object2 =.. [object,face,graph([S1B,_],_),_],
+    similar_size(S1A,S1B).
+%    S1A =.. [object,segment_pair,graph(S1AS,_),_],
+%    S2A =.. [object,segment_pair,graph(S2AS,_),_],
+%    S1B =.. [object,segment_pair,graph(S1BS,_),_],
+%    S2B =.. [object,segment_pair,graph(S2BS,_),_],
+%    conc(S1AS,S2AS,SA), % get all face segments
+%    conc(S1BS,S2BS,SB),
+%    permutation(SA,PA),
+%    permutation(SB,PB),
+%    list_call(similar_size,PA,PB),!.
+
+%similar_size(Object1, Object2) :-
+%    Object1 =.. [object,face_pair,graph([F1A,F2A],_),_],
+%    Object2 =.. [object,face_pair,graph([F1B,F2B],_),_],
+%    similar_size(F1A,F2A).
+%    similar_size(F1A,F1B),
+%    similar_size(F2A,F2B).
 
 %connected(seg(V1,V2), seg(V3,V4)) :-
 %    seg(V1,V2),
@@ -240,7 +293,7 @@ list_oparallel([Object1|R1],[Object2|R2]) :-
     list_oparallel(R1,R2).
 
 gt(Object1,Object2) :-
-    (Type = face_pair; Type = segment_pair),
+    (Type = face_pair; Type = segment_pair; Type = square_face_pair),
     Object1 =.. [object,Type,graph([_,SA],_),_],
     Object2 =.. [object,Type,graph([SB,_],_),_],!,
     gt(SB,SA).

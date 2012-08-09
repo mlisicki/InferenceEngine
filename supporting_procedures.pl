@@ -4,6 +4,13 @@
 
 % GENERAL
 
+list_call(_,[],[]).
+
+list_call(Name,[X|R1],[Y|R2]) :-
+    Proc =.. [Name,X,Y],
+    call(Proc),
+    list_call(Name,R1,R2).
+
 writelist([]).
 
 writelist([X|L]) :-
@@ -163,7 +170,8 @@ show_vertices_list2([V|R],L) :-
 %   nr_add_list(DL1,DL2,DL).
 
 list_fp_vertices(Object,L) :-
-    Object =.. [object,face_pair,graph([Object1,Object2],_),_],
+    (Type = face_pair ; Type = square_face_pair),
+    Object =.. [object,Type,graph([Object1,Object2],_),_],
     show_vertices(Object1,L1),
     show_vertices(Object2,L2),
     diff_list(L1,L2,L3,L4),
@@ -192,3 +200,7 @@ max_dist_list([X,Y|Rest],Max) :-
     max_dist_list([Y|Rest],MaxRest),
     max_dist(X,MaxRest,Max).
 
+vertex_dist([A,B],D) :-
+    arg(3,A,[XA,YA,ZA]),
+    arg(3,B,[XB,YB,ZB]),
+    D is sqrt((XA-XB)^2+(YA-YB)^2+(ZA-ZB)^2).
