@@ -26,20 +26,10 @@ octree(face_pair,OT,Vs) :-
     findall(object(face_pair,G,[X,Y,Z]),object(face_pair,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
 
-%octree(square_face_pair,OT,Vs) :-
-%    octree(face,NewTree,NE),
-%    findall(object(square_face_pair,G,[X,Y,Z]),object(square_face_pair,G,[X,Y,Z],NewTree,NE),Vs),
-%    add_list(NewTree,Vs,OT,_).
-
 octree(cuboid,OT,Vs) :-
     octree(face_pair,NewTree,NE),
     findall(object(cuboid,G,[X,Y,Z]),object(cuboid,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
-
-%octree(square_cuboid,OT,Vs) :-
-%    octree(square_face_pair,NewTree,NE),
-%    findall(object(square_cuboid,G,[X,Y,Z]),object(square_cuboid,G,[X,Y,Z],NewTree,NE),Vs),
-%    add_list(NewTree,Vs,OT,_).
 
 % find bounding box
 bb_max(object(vertex,graph([],[]),[X,Y,Z])) :-
@@ -52,9 +42,7 @@ bb_min(object(vertex,graph([],[]),[X,Y,Z])) :-
     object(vertex,_,[_,Y,_]),not((object(vertex,_,[_,Y1,_]),Y1<Y)),
     object(vertex,_,[_,_,Z]),not((object(vertex,_,[_,_,Z1]),Z1<Z)),!.
 
-%  bb_min(V1),bb_max(V2),findall(object(vertex,G,[X,Y,Z]),object(vertex,G,[X,Y,Z]),Vs),add_list(ot(V1,V2,[],[]),Vs,NewTree,1),show(NewTree).
-%  bb_min(V1),bb_max(V2),findall(object(vertex,G,[X,Y,Z]),object(vertex,G,[X,Y,Z]),Vs),add_list(ot(V1,V2,[],[]),Vs,NewTree,4),findall(object(segment,GS,[XS,YS,ZS]),object(segment,GS,[XS,YS,ZS]),Vs2),add_list(NewTree,Vs2,NewTree2,_),show(NewTree2).
-add_list(Tree,[],Tree,_).
+dd_list(Tree,[],Tree,_).
 
 add_list(Tree,[X|R],NewTree,LeafCapacity) :-
     add(Tree,X,NewTree1,LeafCapacity),
@@ -75,11 +63,6 @@ add(Tree,_,[],Tree,_).
 add(Tree,Object,[V|R],NewTree,LeafCapacity) :-
     add(Tree,Object,V,NewTree1,LeafCapacity),
     add(NewTree1,Object,R,NewTree,LeafCapacity).
-
-%add(ot(BB_min,BB_max,Nodes,Elements),X,NewTree,LeafCapacity) :-
-%    ot_geq(X,BB_min),
-%    ot_geq(BB_max,X),
-%    add_node(ot(BB_min,BB_max,Nodes,Elements),X,NewTree,LeafCapacity).
 
 % Add Object to the leaf determined by V
 add(ot(BB_min,BB_max,Nodes,Elements),Object,V,NewTree,LeafCapacity) :-
@@ -161,12 +144,6 @@ add_to_nodes(Object,V,[Node|RNodes],[NewNode|RNNodes],LeafCapacity) :-
     add(Node,Object,V,NewNode,LeafCapacity),!,
     add_to_nodes(Object,V,RNodes,RNNodes,LeafCapacity).
 
-%add_to_nodes(Object,[Node|RNodes],[NewNode|RNNodes],LeafCapacity) :-
-%    Node = ot(_,BB_max,_,_),
-%    add(Node,Object,Object,NewNode,LeafCapacity),!,
-%    (gt(BB_max,X);	                   % prevent further search if addition succeeded
-%    add_to_nodes(Object,RNodes,RNNodes,LeafCapacity).
-
 add_to_nodes(Object,V,[Node|RNodes],[Node|RNNodes],LeafCapacity) :-
     add_to_nodes(Object,V,RNodes,RNNodes,LeafCapacity).
 
@@ -183,43 +160,6 @@ ot_gt(Object1,Object2) :-
     Object1 =.. [object,_,_,[XA,YA,ZA]],
     Object2 =.. [object,_,_,[XB,YB,ZB]],
     XA > XB, YA > YB, ZA > ZB.
-
-%find(Tree,Object,Nodes) :-
-%    Object =.. [object,_,graph(Vs,_),_],
-%    (Vs == [],!,
-%    find2(Tree,Object,Nodes);
-%    find_list(Tree,Vs,Nodes)).
-%
-%find_list(_,[],[]).
-%
-%find_list(Tree,[Object|R],Nodes) :-
-%    find(Tree,Object,Node),
-%    find_list(Tree,R,RNodes),
-%    conc(Node,RNodes,Nodes).
-%
-%find2(ot(BB_min,BB_max,Nodes,Elements),Object,FNodes) :-
-%    ot_geq(Object,BB_min),
-%    ot_geq(BB_max,Object),
-%    find_node(ot(BB_min,BB_max,Nodes,Elements),Object,FNodes).
-%
-%find_node(ot(BB_min,BB_max,[],Elements),Object,[ot(BB_min,BB_max,[],Elements)]) :-
-%    Object =.. [object,Name,_,_],
-%    Bucket =.. [Name,L],
-%    del(Bucket,Elements,_),
-%    member(Object,L).
-%
-%find_node(ot(_,_,Nodes,[]),Object,FNodes) :-
-%    find_nodes(Object,Nodes,FNodes).
-%
-%find_nodes(_,[],[]).
-%
-%find_nodes(Object,[Node|RNodes],FNodes) :-
-%    find2(Node,Object,FNode),!,
-%    find_nodes(Object,RNodes,FRNodes),
-%    conc(FNode,FRNodes,FNodes).
-%
-%find_nodes(Object,[_|RNodes],FRNodes) :-
-%    find_nodes(Object,RNodes,FRNodes).
 
 find(Tree,Object,Nodes) :-
     Object =.. [object,vertex,_,_],!,

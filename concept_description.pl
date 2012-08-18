@@ -205,11 +205,8 @@ object(chair, Graph, Position, OT, NewElements) :-
     extract_objects(cuboid,Nodes,Objects),
     object(seat,G5,P5,OT,Objects),
     Object5 =.. [object,cuboid,G5,P5],
-%    find(OT,Object5,Nodes5),
-%    extract_objects(cuboid,Nodes5,Objects5),
     object(back,G6,P6,OT,NewElements),
     Object6 =.. [object,cuboid,G6,P6],
-%    show_vertices(Object6,V6),writelist(V6),
     graph([Object1,Object2,Object3,Object4,Object5,Object6],
            [cv_arc(Object1,Object5,not_colliding,_),
             cv_arc(Object2,Object5,not_colliding,_),
@@ -223,18 +220,4 @@ object(chair, Graph, Position, OT, NewElements) :-
             cv_arc(Object5,Object6,not_colliding,_)],
            Graph),
     arg(3,Object5,Position).
-
-
-%object(square_cuboid, Graph, Position, OT, NewElements) :-
-%    member(Object1,NewElements),
-%    find(OT,Object1,Nodes),
-%    extract_objects(square_face_pair,Nodes,FPObjects),
-%    member(Object2,FPObjects),
-%    equal_pos(Object2,Object1),
-%    gt(Object2,Object1),
-%    graph([Object1,Object2],
-%          [cv_arc(Object1,Object2,connected,_),
-%           cv_arc(Object1,Object2,opposite_parallel,_)],
-%           Graph),
-%    arg(3,Object1,Position).
 
