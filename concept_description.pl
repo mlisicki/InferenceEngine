@@ -167,20 +167,62 @@ object(back, Graph, Position) :-
     object(back,Graph,Position,_,NE). 
 
 object(back, Graph, Position, _, NewElements) :-
-    member(Object,NewElements),
-    Object =.. [object,cuboid,Graph,Position].
+    Object =.. [object,square_cuboid,Graph,Position,_,NewElements],
+    call(Object),
+    dim(object(square_cuboid,Graph,Position),H,W),
+    W > H.
 
 object(leg, Graph, Position) :-
-    object(square_cuboid,Graph, Position,_,_),
-    object(leg,Graph,Position,_,_). 
+    octree(cuboid,_,NE),
+    object(leg,Graph,Position,_,NE). 
 
-object(leg, Graph, Position, _, _) :-
-    Object =.. [object,square_cuboid,Graph,Position],
-    side_size(Object,Size1),
-    top_size(Object,Size2),
-    Size1 > Size2.
+object(leg, Graph, Position, _, NewElements) :-
+    Object =.. [object,square_cuboid,Graph,Position,_,NewElements],
+    call(Object),
+    dim(object(square_cuboid,Graph,Position),H,W),
+    H > W.
 
+object(seat, Graph, Position) :-
+    octree(cuboid,_,NE),
+    object(seat,Graph,Position,_,NE). 
 
+object(seat, Graph, Position, _, NewElements) :-
+    Object =.. [object,square_cuboid,Graph,Position,_,NewElements],
+    call(Object),
+    dim(object(square_cuboid,Graph,Position),H,W),
+    W > H.
+
+object(chair, Graph, Position) :-
+    octree(cuboid,OT,NE),
+    object(chair,Graph,Position,OT,NE).
+
+object(chair, Graph, Position, OT, NewElements) :-
+    findall(object(cuboid,Graph,Position),object(leg,Graph,Position,_,NewElements),LObjects),
+    quicksort(LObjects,SortedLObjects),
+    OL = [Object1,Object2,Object3,Object4],
+    combination(SortedLObjects,OL),
+    find(OT,Object1,Nodes),
+    extract_objects(cuboid,Nodes,Objects),
+    object(seat,G5,P5,OT,Objects),
+    Object5 =.. [object,cuboid,G5,P5],
+%    find(OT,Object5,Nodes5),
+%    extract_objects(cuboid,Nodes5,Objects5),
+    object(back,G6,P6,OT,NewElements),
+    Object6 =.. [object,cuboid,G6,P6],
+%    show_vertices(Object6,V6),writelist(V6),
+    graph([Object1,Object2,Object3,Object4,Object5,Object6],
+           [cv_arc(Object1,Object5,not_colliding,_),
+            cv_arc(Object2,Object5,not_colliding,_),
+            cv_arc(Object3,Object5,not_colliding,_),
+            cv_arc(Object4,Object5,not_colliding,_),
+            cv_arc(Object6,Object1,not_colliding,_),
+            cv_arc(Object6,Object2,not_colliding,_),
+            cv_arc(Object6,Object3,not_colliding,_),
+            cv_arc(Object6,Object4,not_colliding,_),
+            cv_arc(Object5,Object6,connected,_),
+            cv_arc(Object5,Object6,not_colliding,_)],
+           Graph),
+    arg(3,Object5,Position).
 
 
 %object(square_cuboid, Graph, Position, OT, NewElements) :-

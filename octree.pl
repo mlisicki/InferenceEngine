@@ -26,20 +26,20 @@ octree(face_pair,OT,Vs) :-
     findall(object(face_pair,G,[X,Y,Z]),object(face_pair,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
 
-octree(square_face_pair,OT,Vs) :-
-    octree(face,NewTree,NE),
-    findall(object(square_face_pair,G,[X,Y,Z]),object(square_face_pair,G,[X,Y,Z],NewTree,NE),Vs),
-    add_list(NewTree,Vs,OT,_).
+%octree(square_face_pair,OT,Vs) :-
+%    octree(face,NewTree,NE),
+%    findall(object(square_face_pair,G,[X,Y,Z]),object(square_face_pair,G,[X,Y,Z],NewTree,NE),Vs),
+%    add_list(NewTree,Vs,OT,_).
 
 octree(cuboid,OT,Vs) :-
     octree(face_pair,NewTree,NE),
     findall(object(cuboid,G,[X,Y,Z]),object(cuboid,G,[X,Y,Z],NewTree,NE),Vs),
     add_list(NewTree,Vs,OT,_).
 
-octree(square_cuboid,OT,Vs) :-
-    octree(square_face_pair,NewTree,NE),
-    findall(object(square_cuboid,G,[X,Y,Z]),object(square_cuboid,G,[X,Y,Z],NewTree,NE),Vs),
-    add_list(NewTree,Vs,OT,_).
+%octree(square_cuboid,OT,Vs) :-
+%    octree(square_face_pair,NewTree,NE),
+%    findall(object(square_cuboid,G,[X,Y,Z]),object(square_cuboid,G,[X,Y,Z],NewTree,NE),Vs),
+%    add_list(NewTree,Vs,OT,_).
 
 % find bounding box
 bb_max(object(vertex,graph([],[]),[X,Y,Z])) :-
