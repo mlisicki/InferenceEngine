@@ -42,7 +42,7 @@ bb_min(object(vertex,graph([],[]),[X,Y,Z])) :-
     object(vertex,_,[_,Y,_]),not((object(vertex,_,[_,Y1,_]),Y1<Y)),
     object(vertex,_,[_,_,Z]),not((object(vertex,_,[_,_,Z1]),Z1<Z)),!.
 
-dd_list(Tree,[],Tree,_).
+add_list(Tree,[],Tree,_).
 
 add_list(Tree,[X|R],NewTree,LeafCapacity) :-
     add(Tree,X,NewTree1,LeafCapacity),
