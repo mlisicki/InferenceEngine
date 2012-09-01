@@ -13,7 +13,7 @@ The application can be run using the command:
 run.sh [file.obj]
 
 where [file.obj] is a wavefront file (e.g. chair.obj in provided example). The output is the full description of the
-inferred object. As it is recursive and includes the descriptions of all of its components I recommend using the Prolog environment for more comprehensive review (use the "[load]." command within the interpreter run in the project director). Although all the example procedures can be easily read looking at the source code, I provide a few more interresting exmples:
+inferred object. As it is recursive and includes the descriptions of all of its components I recommend using the Prolog environment for more comprehensive review (use the "[load]." command within the interpreter run in the project directory). Although all the example procedures can be easily read looking at the source code, I provide a few interresting exmples:
 
 - object(vertex,Grpah,Position).
 
